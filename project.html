@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Проект — Детали</title>
+  <meta name="description" content="Детальное описание проекта скульптора Андрея Орлова" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .markdown-body h1, .markdown-body h2, .markdown-body h3 { font-family:'Playfair Display', serif; font-weight:700; }
+    .markdown-body h1 { font-size:2.25rem; margin-top:1.5rem; margin-bottom:1rem; }
+    .markdown-body h2 { font-size:1.75rem; margin-top:1.25rem; margin-bottom:.75rem; }
+    .markdown-body h3 { font-size:1.5rem; margin-top:1.25rem; margin-bottom:.5rem; }
+    .markdown-body p { margin-bottom:1rem; line-height:1.6; }
+    .markdown-body strong { color:#CD7F32; }
+    .markdown-body hr { border:0; border-top:2px solid #e5e7eb; margin:2rem 0; }
+    .markdown-body ul, .markdown-body ol { padding-left:1.25rem; margin:1rem 0; }
+    .markdown-body blockquote { border-left:4px solid #CD7F32; padding-left:1rem; color:#4b5563; font-style:italic; margin:1rem 0; }
+    .markdown-body img { max-width:100%; border-radius:.5rem; margin:1.25rem 0; }
+    .breadcrumb a { color:#CD7F32; }
+    /* Lightbox */
+    .lightbox-overlay { position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; }
+    .lightbox-overlay.active { display:flex; }
+    .lightbox-img-wrapper { position:relative; max-width:90%; max-height:80%; }
+    .lightbox-img-wrapper img { max-width:100%; max-height:100%; object-fit:contain; border-radius:8px; box-shadow:0 10px 40px rgba(0,0,0,.5); }
+    .lightbox-close, .lightbox-prev, .lightbox-next { position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.15); backdrop-filter:blur(4px); color:#fff; border:none; width:52px; height:52px; display:flex; align-items:center; justify-content:center; cursor:pointer; border-radius:999px; transition:.3s; font-size:1.75rem; }
+    .lightbox-close { top:40px; right:40px; transform:none; font-size:2rem; }
+    .lightbox-prev { left:40px; }
+    .lightbox-next { right:40px; }
+    .lightbox-close:hover, .lightbox-prev:hover, .lightbox-next:hover { background:rgba(255,255,255,0.3); }
+    .lightbox-counter { position:absolute; bottom:-48px; left:50%; transform:translateX(-50%); color:#fff; font-size:.875rem; letter-spacing:.05em; background:rgba(0,0,0,.4); padding:.5rem 1rem; border-radius:999px; }
+    @media (max-width:768px){
+      .lightbox-prev { left:10px; }
+      .lightbox-next { right:10px; }
+      .lightbox-close { right:16px; top:16px; }
+      .lightbox-counter { bottom:-40px; }
+    }
+  </style>
+</head>
+<body class="bg-warm-white text-gray-900">
+  <nav class="fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur border-b border-gray-200">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <a href="index.html" class="font-display text-2xl font-bold text-charcoal">Андрей Орлов</a>
+      <a href="index.html#gallery" class="text-sm text-bronze hover:underline">← Ко всем работам</a>
+    </div>
+  </nav>
+  <main class="pt-28 pb-20">
+    <div class="max-w-5xl mx-auto px-4">
+      <div class="breadcrumb text-xs text-gray-500 mb-6">
+        <a href="index.html">Главная</a> / <a href="index.html#gallery">Галерея</a> / <span id="breadcrumb-title">Проект</span>
+      </div>
+      <h1 id="project-title" class="font-display text-4xl font-bold mb-6 text-charcoal">Загрузка...</h1>
+      <div id="project-meta" class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-8"></div>
+      <div id="project-images" class="grid md:grid-cols-2 gap-6 mb-12"></div>
+      <article id="project-markdown" class="markdown-body"></article>
+      <div class="mt-16">
+        <a href="index.html#gallery" class="inline-block bg-bronze text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-yellow-600 transition">← Назад к галерее</a>
+      </div>
+    </div>
+  </main>
+  <footer class="bg-charcoal text-white py-10 text-center text-sm">© 2025 Андрей Орлов</footer>
+  <!-- Lightbox Overlay -->
+  <div id="lightbox" class="lightbox-overlay" aria-hidden="true">
+    <button id="lb-close" class="lightbox-close" aria-label="Закрыть">×</button>
+    <button id="lb-prev" class="lightbox-prev" aria-label="Предыдущий">‹</button>
+    <div class="lightbox-img-wrapper">
+      <img id="lb-image" src="" alt="" />
+      <div id="lb-counter" class="lightbox-counter"></div>
+    </div>
+    <button id="lb-next" class="lightbox-next" aria-label="Следующий">›</button>
+  </div>
+  <script>
+    async function loadProjects() {
+      try {
+        const res = await fetch('projects.json');
+        return await res.json();
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    }
+    function getQueryParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
+    let currentIndex = 0;
+    let currentImages = [];
+    function renderImages(project) {
+      const container = document.getElementById('project-images');
+      container.innerHTML = '';
+      currentImages = project.images || [];
+      currentImages.forEach((src, idx) => {
+        const fig = document.createElement('figure');
+        fig.className = 'relative group overflow-hidden rounded-lg shadow cursor-zoom-in';
+        fig.innerHTML = `<img data-index="${idx}" src="${src}" alt="${project.title}" class="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">`;
+        container.appendChild(fig);
+      });
+      bindImageClicks();
+    }
+    function bindImageClicks() {
+      document.querySelectorAll('#project-images img').forEach(img => {
+        img.addEventListener('click', (e) => {
+          const idx = parseInt(e.currentTarget.getAttribute('data-index'), 10);
+          openLightbox(idx);
+        });
+      });
+    }
+    function openLightbox(index) {
+      if (!currentImages.length) return;
+      currentIndex = (index + currentImages.length) % currentImages.length;
+      const overlay = document.getElementById('lightbox');
+      const imgEl = document.getElementById('lb-image');
+      const counter = document.getElementById('lb-counter');
+      imgEl.src = currentImages[currentIndex];
+      imgEl.alt = 'Изображение ' + (currentIndex + 1);
+      counter.textContent = (currentIndex + 1) + ' / ' + currentImages.length;
+      overlay.classList.add('active');
+      overlay.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+      const overlay = document.getElementById('lightbox');
+      overlay.classList.remove('active');
+      overlay.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+    }
+    function nextImage() { openLightbox(currentIndex + 1); }
+    function prevImage() { openLightbox(currentIndex - 1); }
+    function setupLightboxControls() {
+      document.getElementById('lb-close').addEventListener('click', closeLightbox);
+      document.getElementById('lb-next').addEventListener('click', nextImage);
+      document.getElementById('lb-prev').addEventListener('click', prevImage);
+      document.getElementById('lightbox').addEventListener('click', (e) => {
+        if (e.target.id === 'lightbox') closeLightbox();
+      });
+      document.addEventListener('keydown', (e) => {
+        const active = document.getElementById('lightbox').classList.contains('active');
+        if (!active) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowRight') nextImage();
+        if (e.key === 'ArrowLeft') prevImage();
+      });
+    }
+    function renderMarkdown(md) {
+      if (window.marked) {
+        marked.setOptions({ breaks:true, mangle:false, headerIds:true });
+        return marked.parse(md);
+      }
+      return md;
+    }
+    function updateMeta(project) {
+      document.title = project.title + ' — Андрей Орлов';
+      const meta = document.getElementById('project-meta');
+      meta.innerHTML = '';
+      const year = document.createElement('span');
+      year.className = 'inline-flex items-center bg-gray-100 px-3 py-1 rounded-full';
+      year.textContent = project.year || '—';
+      meta.appendChild(year);
+      const cat = document.createElement('span');
+      cat.className = 'inline-flex items-center bg-gray-100 px-3 py-1 rounded-full';
+      cat.textContent = project.category || '';
+      meta.appendChild(cat);
+    }
+    async function init() {
+      const slug = getQueryParam('slug');
+      const titleEl = document.getElementById('project-title');
+      const mdEl = document.getElementById('project-markdown');
+      if (!slug) { titleEl.textContent = 'Проект не найден'; return; }
+      const projects = await loadProjects();
+      const project = projects.find(p => p.slug === slug);
+      if (!project) { titleEl.textContent = 'Проект не найден'; return; }
+      document.getElementById('breadcrumb-title').textContent = project.title;
+      titleEl.textContent = project.title;
+      updateMeta(project);
+      renderImages(project);
+      mdEl.innerHTML = renderMarkdown(project.markdown || project.description || '');
+      setupLightboxControls();
+    }
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
